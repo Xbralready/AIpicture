@@ -133,8 +133,10 @@ export interface AnalysisResult {
   reference: ReferenceAnalysis;
   product: ProductAnalysis;
   fusion: FusionSuggestion;
-  // 产品的精确英文描述（用于生成）
+  // 产品的精确英文描述（用于生成）- 不可变事实
   productDescription?: string;
+  // 参考图的视觉风格描述（只包含拍摄方式）- 仅用于风格迁移
+  referenceStyle?: string;
 }
 
 // 生成结果
