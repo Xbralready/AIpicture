@@ -46,7 +46,7 @@ OUTPUT RULES:
           ],
         },
       ],
-      max_tokens: 500,
+      max_completion_tokens: 500,
     }),
   });
 
@@ -109,7 +109,7 @@ OUTPUT RULES:
           ],
         },
       ],
-      max_tokens: 800,
+      max_completion_tokens: 800,
     }),
   });
 

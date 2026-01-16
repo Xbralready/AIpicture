@@ -30,7 +30,7 @@ IMPORTANT REQUIREMENTS:
 
 OUTPUT RULES:
 - Output only the final English product description.
-- Do not include explanations, bullet points, or labels.`},{role:"user",content:[{type:"image_url",image_url:{url:a}}]}],max_tokens:500})});if(!l.ok){const o=await l.json();throw new Error(o.error?.message||"产品分析失败")}return(await l.json()).choices[0]?.message?.content||""}async function ux(a){const l=await fetch(`${ou}/chat/completions`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-5.2",messages:[{role:"system",content:`You are a commercial photography style analyst.
+- Do not include explanations, bullet points, or labels.`},{role:"user",content:[{type:"image_url",image_url:{url:a}}]}],max_completion_tokens:500})});if(!l.ok){const o=await l.json();throw new Error(o.error?.message||"产品分析失败")}return(await l.json()).choices[0]?.message?.content||""}async function ux(a){const l=await fetch(`${ou}/chat/completions`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"gpt-5.2",messages:[{role:"system",content:`You are a commercial photography style analyst.
 
 Your task is to analyze the reference image and extract ONLY visual expression attributes
 that can be safely transferred to another product image.
@@ -51,7 +51,7 @@ OUTPUT RULES:
 - Output in concise English phrases or short sentences.
 - Do NOT mention the product category or product features.
 - Do NOT include explanations or headings.
-- Keep the description focused and actionable for image generation.`},{role:"user",content:[{type:"image_url",image_url:{url:a}}]}],max_tokens:800})});if(!l.ok){const o=await l.json();throw new Error(o.error?.message||"参考图分析失败")}return(await l.json()).choices[0]?.message?.content||""}async function ox(a,l){const u=await v0(l);console.log("[STEP 1] 产品精确描述:",u);const o=await ux(a);console.log("[STEP 2] 参考图风格:",o);const c=`[STYLE REFERENCE — VISUAL EXPRESSION ONLY]
+- Keep the description focused and actionable for image generation.`},{role:"user",content:[{type:"image_url",image_url:{url:a}}]}],max_completion_tokens:800})});if(!l.ok){const o=await l.json();throw new Error(o.error?.message||"参考图分析失败")}return(await l.json()).choices[0]?.message?.content||""}async function ox(a,l){const u=await v0(l);console.log("[STEP 1] 产品精确描述:",u);const o=await ux(a);console.log("[STEP 2] 参考图风格:",o);const c=`[STYLE REFERENCE — VISUAL EXPRESSION ONLY]
 Apply the following visual presentation style extracted from the reference image:
 ${o}
 
