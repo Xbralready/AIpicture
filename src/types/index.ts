@@ -150,3 +150,12 @@ export type WorkflowStep =
   | 'review'      // 查看融合建议
   | 'generating'  // 生成中
   | 'complete';   // 完成
+
+// Tab 类型
+export type TabType = 'fusion' | 'imageToImage';
+
+// 图生图工作流步骤
+export type ImageToImageStep =
+  | 'upload'      // 上传产品图
+  | 'generating'  // 生成中
+  | 'complete';   // 完成

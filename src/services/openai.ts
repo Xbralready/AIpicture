@@ -4,7 +4,8 @@ import type { AnalysisResult, GenerationResult } from '../types';
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001/api';
 
 /**
- * 单独分析产品图，获取极其精确的产品描述
+ * [STEP 1] 产品分析 (GPT-4o, image → text)
+ * 输出：英文「不可变产品描述」
  */
 async function analyzeProduct(productImageBase64: string): Promise<string> {
   const response = await fetch(`${API_BASE}/chat/completions`, {
@@ -13,28 +14,31 @@ async function analyzeProduct(productImageBase64: string): Promise<string> {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o',
+      model: 'gpt-5.2',
       messages: [
         {
           role: 'system',
-          content: `你是一位专业的服装产品分析师。你的任务是用英文极其精确地描述这件服装产品。
+          content: `You are a professional commercial product analyst.
 
-【重要】你的描述将直接用于图片生成，所以必须：
-1. 颜色必须精确（不是 brown，而是具体的 taupe/mushroom/grayish-brown/cognac 等）
-2. 材质必须精确（不是 fabric，而是 smooth matte cotton canvas/technical fabric/wool blend 等）
-3. 款式必须精确（field jacket/chore coat/bomber/blazer 等）
-4. 所有细节都要描述（领子材质颜色、闭合方式、口袋位置和样式、袖口细节、衣长等）
+Your task is to analyze the uploaded product image and produce an extremely precise and factual English description of the product for image generation.
 
-只输出英文产品描述，不要任何其他内容。格式如下：
-[garment type] in [exact color], made of [exact material], featuring [collar details], [closure type], [pocket details], [length], [other distinctive features]`,
+IMPORTANT REQUIREMENTS:
+- First, identify the product category based solely on what is visible in the image.
+- Describe the product in a neutral, objective manner.
+- Color must be extremely precise and specific (avoid generic terms like "brown" or "dark").
+- Material must be precisely identified (e.g. smooth matte technical fabric, full-grain leather, molded plastic).
+- Product style and category must be exact.
+- All visible structural details must be described (closure, pockets, shape, proportions, surface finish, etc.).
+- Do NOT infer or invent unseen details.
+- Do NOT add styling, background, lighting, or atmosphere descriptions.
+
+OUTPUT RULES:
+- Output only the final English product description.
+- Do not include explanations, bullet points, or labels.`,
         },
         {
           role: 'user',
           content: [
-            {
-              type: 'text',
-              text: '请用英文精确描述这件服装产品的所有细节。',
-            },
             {
               type: 'image_url',
               image_url: { url: productImageBase64 },
@@ -72,7 +76,7 @@ export async function analyzeAndSuggest(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model: 'gpt-4o',
+      model: 'gpt-5.2',
       messages: [
         {
           role: 'system',
@@ -303,10 +307,86 @@ export async function analyzeAndSuggest(
     // 添加产品精确描述到结果中
     result.productDescription = productDescription;
     return result;
-  } catch (e) {
+  } catch {
     console.error('JSON 解析失败:', jsonStr);
     throw new Error(`JSON 解析失败`);
   }
+}
+
+/**
+ * [STEP 2] 图生图：根据产品图和用户 Prompt 生成新图片
+ *
+ * 架构说明：
+ * - 用户 prompt 是「风格语言」，控制"如何拍"
+ * - 产品描述是「约束语言」，锁定"拍什么"
+ * - 产品图作为 image input，确保产品准确性
+ */
+export async function generateFromProductWithPrompt(
+  productImageBase64: string,
+  userPrompt: string
+): Promise<GenerationResult> {
+  // STEP 1：分析产品图，获取英文「不可变产品描述」
+  const productDescription = await analyzeProduct(productImageBase64);
+  console.log('产品精确描述:', productDescription);
+
+  // STEP 2：构建结构化生成 Prompt
+  const fullPrompt = `[STYLE & MARKETING CONTEXT]
+${userPrompt}
+
+---
+
+[PRODUCT CONSTRAINTS — IMMUTABLE]
+Product details (must be accurately represented):
+${productDescription}
+
+---
+
+[STRICT GENERATION RULES]
+- The product's structure, silhouette, color, material, and all details must exactly match the description above.
+- These product attributes are locked and must not be altered under any circumstances.
+- Styling, background, lighting, and mood may follow the style context, but must not conflict with product accuracy.
+- Do not simplify, exaggerate, or reinterpret the product.`;
+
+  // STEP 3：生成图片
+  return generateImageFromPrompt(fullPrompt);
+}
+
+/**
+ * 图生图模式的图片生成
+ * 注意：gpt-image-1 的 /images/generations 不支持 image 参数
+ * 依赖详细的产品描述来确保生成准确性
+ */
+async function generateImageFromPrompt(
+  prompt: string
+): Promise<GenerationResult> {
+  const imageResponse = await fetch(`${API_BASE}/images/generations`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-image-1',
+      prompt: prompt,
+      n: 1,
+      size: '1024x1536',
+      quality: 'high',
+    }),
+  });
+
+  if (!imageResponse.ok) {
+    const error = await imageResponse.json();
+    const errorMsg = error.error?.message || '图片生成失败';
+    throw new Error(`${errorMsg}\n\n【提示词】:\n${prompt}`);
+  }
+
+  const imageData = await imageResponse.json();
+  const b64 = imageData.data[0]?.b64_json;
+  const imageUrl = b64 ? `data:image/png;base64,${b64}` : (imageData.data[0]?.url || '');
+
+  return {
+    imageUrl,
+    revisedPrompt: prompt,
+  };
 }
 
 /**

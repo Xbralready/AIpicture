@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { Download, RefreshCw } from 'lucide-react';
+import { useLocale } from '../i18n/LocaleContext';
 import type { GenerationResult as GenerationResultType } from '../types';
 
 interface GenerationResultProps {
@@ -13,6 +14,7 @@ export function GenerationResult({
   onRegenerate,
   isRegenerating,
 }: GenerationResultProps) {
+  const { t } = useLocale();
   const handleDownload = async () => {
     try {
       const response = await fetch(result.imageUrl);
@@ -36,7 +38,7 @@ export function GenerationResult({
       animate={{ opacity: 1, scale: 1 }}
       className="generation-result"
     >
-      <h3>生成结果</h3>
+      <h3>{t('resultTitle')}</h3>
 
       <div className="result-image-container">
         <img src={result.imageUrl} alt="Generated" className="result-image" />
@@ -48,7 +50,7 @@ export function GenerationResult({
           onClick={handleDownload}
         >
           <Download size={18} />
-          下载图片
+          {t('downloadBtn')}
         </button>
         <button
           className="action-btn secondary"
@@ -56,12 +58,12 @@ export function GenerationResult({
           disabled={isRegenerating}
         >
           <RefreshCw size={18} className={isRegenerating ? 'spinning' : ''} />
-          重新生成
+          {t('regenerateBtn')}
         </button>
       </div>
 
       <div className="prompt-info">
-        <h4>生成提示词</h4>
+        <h4>{t('promptUsed')}</h4>
         <p className="revised-prompt">{result.revisedPrompt}</p>
       </div>
     </motion.div>

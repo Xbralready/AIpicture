@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { Upload, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useLocale } from '../i18n/LocaleContext';
 
 interface ImageUploaderProps {
   onImageSelect: (base64: string) => void;
@@ -17,6 +18,8 @@ export function ImageUploader({
   currentImage,
   disabled = false,
 }: ImageUploaderProps) {
+  const { t } = useLocale();
+
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -79,14 +82,14 @@ export function ImageUploader({
             <img src={currentImage} alt="Preview" className="preview-image" />
             <div className="preview-overlay">
               <ImageIcon size={24} />
-              <span>点击更换图片</span>
+              <span>{t('changeImage')}</span>
             </div>
           </div>
         ) : (
           <div className="upload-placeholder">
             <Upload size={48} />
-            <span>拖拽图片到这里或点击上传</span>
-            <span className="upload-hint">支持 JPG、PNG、WebP 格式</span>
+            <span>{t('uploadHint')}</span>
+            <span className="upload-hint">{t('uploadFormat')}</span>
           </div>
         )}
       </label>

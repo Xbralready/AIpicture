@@ -1,15 +1,20 @@
 import { useState, useCallback } from 'react';
 import { AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, RotateCcw } from 'lucide-react';
+import { TabSwitcher } from './components/TabSwitcher';
 import { ImageUploader } from './components/ImageUploader';
 import { FusionReview } from './components/FusionReview';
 import { GenerationResult } from './components/GenerationResult';
 import { LoadingState } from './components/LoadingState';
+import { ImageToImage } from './components/ImageToImage';
+import { useLocale } from './i18n/LocaleContext';
 import { analyzeAndSuggest, generateImage } from './services/openai';
-import type { AnalysisResult, GenerationResult as GenerationResultType, WorkflowStep } from './types';
+import type { AnalysisResult, GenerationResult as GenerationResultType, WorkflowStep, TabType } from './types';
 import './App.css';
 
 function App() {
+  const { t } = useLocale();
+  const [activeTab, setActiveTab] = useState<TabType>('fusion');
   const [step, setStep] = useState<WorkflowStep>('upload');
   const [referenceImage, setReferenceImage] = useState<string>('');
   const [productImage, setProductImage] = useState<string>('');
@@ -105,27 +110,36 @@ function App() {
       <header className="header">
         <div className="logo">
           <Sparkles size={28} />
-          <h1>AI Marketing Studio</h1>
+          <h1>{t('title')}</h1>
         </div>
-        <p className="tagline">智能营销素材生成工具</p>
+        <p className="tagline">{t('tagline')}</p>
       </header>
 
       <main className="main">
+        {/* Tab 切换 */}
+        <TabSwitcher activeTab={activeTab} onTabChange={setActiveTab} />
+
+        {/* 图生图模式 */}
+        {activeTab === 'imageToImage' && <ImageToImage />}
+
+        {/* 爆款融合模式 */}
+        {activeTab === 'fusion' && (
+          <>
         {/* 步骤指示器 */}
         <div className="steps-indicator">
           <div className={`step-item ${step === 'upload' || step === 'analyzing' ? 'active' : ''} ${analysis ? 'completed' : ''}`}>
             <span className="step-number">1</span>
-            <span className="step-label">上传素材</span>
+            <span className="step-label">{t('step1')}</span>
           </div>
           <ArrowRight size={20} className="step-arrow" />
           <div className={`step-item ${step === 'review' || step === 'generating' ? 'active' : ''} ${generationResult ? 'completed' : ''}`}>
             <span className="step-number">2</span>
-            <span className="step-label">融合建议</span>
+            <span className="step-label">{t('step2')}</span>
           </div>
           <ArrowRight size={20} className="step-arrow" />
           <div className={`step-item ${step === 'complete' ? 'active completed' : ''}`}>
             <span className="step-number">3</span>
-            <span className="step-label">生成结果</span>
+            <span className="step-label">{t('step3')}</span>
           </div>
         </div>
 
@@ -139,15 +153,15 @@ function App() {
           <AnimatePresence mode="wait">
             {step === 'analyzing' && (
               <LoadingState
-                message="正在分析素材..."
-                subMessage="AI 正在同时分析爆款素材和产品图，生成融合建议"
+                message={t('analyzingTitle')}
+                subMessage={t('analyzingSub')}
               />
             )}
 
             {step === 'generating' && (
               <LoadingState
-                message="正在生成营销素材..."
-                subMessage="AI 正在根据融合建议生成图片，请耐心等待"
+                message={t('generatingTitle')}
+                subMessage={t('generatingSub')}
               />
             )}
           </AnimatePresence>
@@ -157,14 +171,14 @@ function App() {
             <div className="upload-step">
               <div className="upload-grid">
                 <ImageUploader
-                  label="爆款参考素材"
-                  description="上传一张成功的营销图片作为参考"
+                  label={t('referenceLabel')}
+                  description={t('referenceDesc')}
                   onImageSelect={handleReferenceImageSelect}
                   currentImage={referenceImage}
                 />
                 <ImageUploader
-                  label="产品图"
-                  description="上传你要推广的产品图片"
+                  label={t('productLabel')}
+                  description={t('productDesc')}
                   onImageSelect={handleProductImageSelect}
                   currentImage={productImage}
                 />
@@ -174,7 +188,7 @@ function App() {
                 <div className="action-area">
                   <button className="action-btn primary large" onClick={handleAnalyze}>
                     <Sparkles size={20} />
-                    分析并获取融合建议
+                    {t('analyzeBtn')}
                   </button>
                 </div>
               )}
@@ -187,11 +201,11 @@ function App() {
               <div className="preview-images">
                 <div className="preview-item">
                   <img src={referenceImage} alt="Reference" />
-                  <span>爆款参考</span>
+                  <span>{t('reference')}</span>
                 </div>
                 <div className="preview-item">
                   <img src={productImage} alt="Product" />
-                  <span>产品图</span>
+                  <span>{t('product')}</span>
                 </div>
               </div>
               <FusionReview
@@ -209,11 +223,11 @@ function App() {
                 <div className="comparison-images">
                   <div className="comparison-item">
                     <img src={referenceImage} alt="Reference" />
-                    <span>爆款参考</span>
+                    <span>{t('reference')}</span>
                   </div>
                   <div className="comparison-item">
                     <img src={productImage} alt="Product" />
-                    <span>产品图</span>
+                    <span>{t('product')}</span>
                   </div>
                 </div>
               </div>
@@ -224,20 +238,22 @@ function App() {
               />
               <div className="result-actions">
                 <button className="action-btn secondary" onClick={handleBackToReview}>
-                  返回查看建议
+                  {t('backToReview')}
                 </button>
                 <button className="action-btn secondary" onClick={handleReset}>
                   <RotateCcw size={18} />
-                  重新开始
+                  {t('resetBtn')}
                 </button>
               </div>
             </div>
           )}
         </div>
+          </>
+        )}
       </main>
 
       <footer className="footer">
-        <p>Powered by OpenAI GPT-4o</p>
+        <p>{t('poweredBy')}</p>
       </footer>
     </div>
   );
